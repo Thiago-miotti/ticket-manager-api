@@ -1,97 +1,35 @@
-import { randomUUID } from "crypto";
 import { parseRoutePath } from "./utils/parseRoutePath.js";
+import { ListTickets } from "./controllers/tickets/list.js";
+import { CreateTicket } from "./controllers/tickets/create.js";
+import { UpdateTicket } from "./controllers/tickets/update.js";
+import { UpdateTicketStatus } from "./controllers/tickets/update-status.js";
+import { DeleteTicket } from "./controllers/tickets/delete.js";
 
 export const routes = [
   {
     method: "GET",
     path: "/tickets",
-    controller: ({ request, response, database }) => {
-      const tickets = database.select("tickets");
-
-      if (request.query.status === "open") {
-        const ticketsOpen = tickets.filter((ticket) => {
-          return ticket.status === "open";
-        });
-
-        return response.end(JSON.stringify(ticketsOpen));
-      }
-
-      if (request.query.status === "closed") {
-        const ticketsClosed = tickets.filter((ticket) => {
-          return ticket.status === "closed";
-        });
-
-        return response.end(JSON.stringify(ticketsClosed));
-      }
-
-      return response.end(JSON.stringify(tickets));
-    },
+    controller: ListTickets,
   },
   {
     method: "POST",
     path: "/tickets",
-    controller: ({ request, response, database }) => {
-      const id = randomUUID();
-      const status = "open";
-      const { equipament, description, user_name } = request.body;
-      database.insert("tickets", {
-        equipament,
-        description,
-        user_name,
-        id,
-        status,
-      });
-      return response
-        .writeHead(201)
-        .end(
-          JSON.stringify({ equipament, description, user_name, id, status }),
-        );
-    },
+    controller: CreateTicket,
   },
   {
     method: "PUT",
     path: "/tickets/:id",
-    controller: ({ request, response, database }) => {
-      const { equipament, description } = request.body;
-      const ticket = database.update(
-        "tickets",
-        request.params.id,
-        equipament,
-        description,
-      );
-
-      if (!request.params.id) {
-        return response.end("Ticket não encontrado!");
-      }
-
-      return response.end(JSON.stringify(ticket));
-    },
+    controller: UpdateTicket,
   },
   {
     method: "PATCH",
     path: "/tickets/:id/status",
-    controller: ({ request, response, database }) => {
-      database.closeTicket("tickets", request.params.id);
-
-      if (!request.params.id) {
-        return response.end("Ticket não encontrado!");
-      }
-
-      return response.end("Ticket concluído com sucesso!");
-    },
+    controller: UpdateTicketStatus,
   },
   {
     method: "DELETE",
     path: "/tickets/:id",
-    controller: ({ request, response, database }) => {
-      database.deleteTicket("tickets", request.params.id);
-
-      if (!request.params.id) {
-        return response.end("Ticket não encontrado!");
-      }
-
-      return response.end("Ticket deletado com sucesso!");
-    },
+    controller: DeleteTicket,
   },
 ].map((route) => ({
   ...route,
